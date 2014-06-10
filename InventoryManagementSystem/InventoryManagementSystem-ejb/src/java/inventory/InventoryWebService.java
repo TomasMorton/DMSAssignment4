@@ -15,7 +15,7 @@ import javax.ws.rs.Produces;
  *
  * @author Tomas
  */
-@WebService(serviceName = "InventoryWebService")
+@WebService
 @Stateless
 public class InventoryWebService
 {
@@ -24,61 +24,93 @@ public class InventoryWebService
         
     }
     
-    /**
-     * This is a sample web service operation
-     */
+    @EJB(mappedName="ejb/InventoryAnalyzer")
+    private InventoryAnalyzer analyzer;
+    @EJB(mappedName="ejb/InventoryManager")
+    private InventoryManager manager;
+
     @WebMethod
-    public String sayHello(@WebParam(name = "name") String txt)
+    public String[] getInventory()
     {
-        return "Hello " + txt + " !";
+        return manager.getInventory();
+    }
+
+    @WebMethod
+    public String getInventoryTable()
+    {
+        return manager.getInventoryTable();
     }
     
-//    @EJB
-//    private DatabaseBean dbManager;
-
-    @WebMethod
-    public String getInventory()
-    {
-//        String inventory = "";
-//        if (dbManager == null)
-//        {
-//            return "There are no items.";
-//        }
-//        for (String itemName : dbManager.getItemNames())
-//        {
-//            inventory += itemName + " has value "
-//                    + dbManager.getItemValue(itemName) + ".\n";
-//        }
-        return "got inventory?";//inventory;
-    }
-
     @WebMethod
     public String getItem(@WebParam(name = "name") String itemName)
     {
-//        if (dbManager.itemExists(itemName))
-//        {
-//            return itemName + " has value "
-//                    + dbManager.getItemValue(itemName) + ".";
-//        } else
-//        {
-            return "No such item.";
-//        }
+        return manager.getItem(itemName);
     }
 
     @WebMethod
-    public String putItem(@WebParam(name = "name") String itemName,
-            @PathParam("value") int itemValue)
+    public String addItem(@WebParam(name="itemName") String itemName,
+            @WebParam(name = "quantity") double itemValue)
     {
-//        if (dbManager.itemExists(itemName))
-//        {
-//            int oldValue = dbManager.getItemValue(itemName);
-//            dbManager.addItem(itemName, itemValue);
-//            return itemName + " value updated from " + oldValue + " to "
-//                    + itemValue + ".";
-//        } else
-//        {
-//            dbManager.addItem(itemName, itemValue);
-            return itemName + " added with value " + itemValue + ".";
-//        }
+        return manager.addItem(itemName, itemValue, 0);
+    }
+    
+    @WebMethod
+    public String addItemWithQuantity(@WebParam(name = "itemName") String itemName,
+            @WebParam(name="value") double itemValue,
+            @WebParam(name="quantity") int quantity)
+    {
+        return manager.addItem(itemName, itemValue, quantity);
+    }
+    
+    @WebMethod
+    public String getItemPriceText(@WebParam(name = "itemName") String itemName)
+    {
+        return manager.getItemPriceText(itemName);
+    }
+    
+    @WebMethod
+    public double getItemPrice(@WebParam(name = "itemName") String itemName)
+    {
+        return manager.getItemPrice(itemName);
+    }
+    
+    @WebMethod
+    public int getItemQuantity(@WebParam(name = "itemName") String itemName)
+    {
+        return manager.getItemQuantity(itemName);
+    }
+    
+    @WebMethod
+    public void increaseStockQuantity(@WebParam(name = "itemName") String itemName,
+            @WebParam(name="quantity") int quantityToAdd)
+    {
+        manager.increaseStockQuantity(itemName, quantityToAdd);
+    }
+    
+    @WebMethod
+    public void decreaseStockQuantity(@WebParam(name = "itemName") String itemName,
+            @WebParam(name="quantity") int quantityToRemove)
+    {
+        manager.decreaseStockQuantity(itemName, quantityToRemove);
+    }
+    
+    @WebMethod
+    public void updateStockQuantity(@WebParam(name = "itemName") String itemName,
+            @WebParam(name="quantity") int newQuantity)
+    {
+        manager.increaseStockQuantity(itemName, newQuantity);
+    }
+    
+    @WebMethod
+    public void removeItem(@WebParam(name = "itemName") String itemName)
+    {
+        manager.removeItem(itemName);
+    }
+    
+    @WebMethod
+    public void updatePrice(@WebParam(name = "itemName") String itemName,
+            @WebParam(name="price") double newPrice)
+    {
+        manager.updatePrice(itemName, newPrice);
     }
 }

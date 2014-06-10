@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<properties>
+<comment>CustomerServlet Configuration Properties</comment>
+<entry key="dbDriver">org.apache.derby.jdbc.ClientDriver</entry>
+<!--<entry key="dbUrl">jdbc:derby://localhost:1527/WebForumDatabase</entry>-->
+<entry key="dbUrl">jdbc:derby://localhost:1527/InventoryManagement</entry>
+<entry key="user">dms</entry>
+<entry key="password">dms</entry>
+</properties>
