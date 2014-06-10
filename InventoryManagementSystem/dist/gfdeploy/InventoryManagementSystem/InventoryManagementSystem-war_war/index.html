@@ -1,0 +1,26 @@
+<!DOCtype html>
+<html>
+    <head>
+        <title>Inventory Management - Test Page</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body>
+        <h1>RESTful Stock Web Service</h1>
+
+        <form action="/InventoryManagementSystem-war/webresources/inventory">
+            <input type="submit" value="List all items in inventory.">
+        </form>
+        <br>
+        <form action="/InventoryManagementSystem-war/webresources/inventory/brick">
+            <input type="submit" value="Lookup brick item.">
+        </form>
+        <br>
+        <form action="/InventoryManagementSystem-war/webresources/inventory/rock">
+            <input type="submit" value="Lookup rock item.">
+        </form>
+        <br>
+        <form action="/InventoryManagementSystem-war/webresources/inventory/rock/5" method="post">
+            <input type="submit" value="Add a rock item.">
+        </form>
+</html>
