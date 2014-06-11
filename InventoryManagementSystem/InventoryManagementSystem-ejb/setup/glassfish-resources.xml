@@ -5,8 +5,8 @@
         <property name="serverName" value="localhost"/>
         <property name="portNumber" value="1527"/>
         <property name="databaseName" value="InventoryManagement"/>
-        <property name="User" value=""/>
-        <property name="Password" value=""/>
+        <property name="User" value="dms"/>
+        <property name="Password" value="dms"/>
         <property name="URL" value="jdbc:derby://localhost:1527/InventoryManagement"/>
         <property name="driverClass" value="org.apache.derby.jdbc.ClientDriver"/>
     </jdbc-connection-pool>
