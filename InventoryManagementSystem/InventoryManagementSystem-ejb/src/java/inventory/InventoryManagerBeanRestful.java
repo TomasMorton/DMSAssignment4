@@ -1,116 +1,94 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package inventory;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 
 /**
  *
  * @author Tomas
  */
 @Stateless
-@Path("/inventory")
-public class InventoryManagerBeanRestful implements InventoryManager
+@Path("/manager")
+public class InventoryManagerBeanRestful
 {
-
-    @EJB
-    private DatabaseBean dbManager;
-
+    @EJB private DatabaseBean dbManager;
+    @DefaultValue("") @QueryParam("name") String itemName;
+    @DefaultValue("-1") @QueryParam("quantity") int quantity;
+    @DefaultValue("-1.00") @QueryParam("price") double price;
+    
+    
+    /**
+     * Returns a list of names of all items in the 
+     * database.
+     * @return 
+     */
     @GET
     @Produces("text/plain")
-    @Override
     public String[] getInventory()
     {
         return dbManager.getItemNames();
     }
 
+
+    /**
+     * Get the name, price and quantity of an item provided
+     * as a <code>name</code> query parameter. <br>
+     * If no name parameter is provided, a list of the entire
+     * database is returned.
+     * @return 
+     */
     @GET
+    @Path("/get")
     @Produces("text/plain")
-    @Override
-    public String getInventoryTable()
+    public String getItem()
+    {
+        if (!itemName.isEmpty())
+        {
+            if (dbManager.itemExists(itemName))
+            {
+                String[] item = dbManager.getItem(itemName);
+                String cost = '$' + String.format("%6.2f", Integer.parseInt(item[1]) / 100.0);
+                return item[0] + " | Price: " + cost + " | Quantity: " + item[2] + ".";
+            } else
+            {
+                return "Item '" + itemName + "' does not exist.";
+            }
+        } else 
+        {
+            return getInventoryTable();
+        }
+    }
+    
+    /**
+     * Returns a formatted list of all items in the
+     * database, including their price and quantity.
+     * @return 
+     */
+    private String getInventoryTable()
     {
         String inventory = "";
-        for (String itemName : dbManager.getItemNames())
+        for (String name : dbManager.getItemNames())
         {
-            int cents = dbManager.getItemPrice(itemName);
-            String dollars = '$' + String.format("%6.2f", cents / 100.0);//%(,.2f
-            inventory += itemName + " costs " + dollars + ".\n";
+            String[] item = dbManager.getItem(name);
+            String cost = '$' + String.format("%6.2f", Integer.parseInt(item[1]) / 100.0);
+            inventory += item[0] + " | Price: " + cost + " | Quantity: " + item[2] + ".\n";
         }
         return inventory;
     }
-
+    
     @GET
-    @Path("get/{name}")
+    @Path("/get/price")
     @Produces("text/plain")
-    @Override
-    public String getItem(@PathParam("name") String itemName)
+    public double getItemPrice()
     {
-        if (dbManager.itemExists(itemName))
-        {
-            String[] item = dbManager.getItem(itemName);
-            String price = '$' + String.format("%6.2f", Integer.parseInt(item[1]) / 100.0);
-            return item[0] + " | Price: " + price + " | Quantity: " + item[2] + ".";
-        } else
-        {
-            return "Item '" + itemName + "' does not exist.";
-        }
-    }
-
-    @POST
-    @Path("add/{name}/{value}")
-    @Produces("text/plain")
-    @Override
-//    public String putItem(
-    /**
-     * Adds a new item to the database. Input the price as 13.99, it will then
-     * be converted to 1399 and stored.
-     */
-    public String addItem(@PathParam("name") String itemName,
-            @PathParam("value") double itemValue,
-            @PathParam("quantity") int quantity)
-    {
-//        if (dbManager.itemExists(itemName))
-//        {
-//            int oldValue = dbManager.getItemValue(itemName);
-//            dbManager.addItem(itemName, itemValue);
-//            return itemName + " value updated from " + oldValue + " to "
-//                    + itemValue + ".";
-//        } else
-//        {
-//            dbManager.addItem(itemName, itemValue);
-//            return itemName + " added with value " + itemValue + ".";
-//        }
-        if (!dbManager.itemExists(itemName))
-        {
-            int price = (int) (itemValue * 100);
-            dbManager.addItem(itemName, price);
-            String priceResult = '$' + String.format("%6.2f", price / 100.0);
-            return "Item " + itemName + " (" + priceResult + ") created successfully.";
-        } else
-        {
-            return "Item already exists.  Please use the update field to change the price.";
-        }
-    }
-
-    public String addItem(@PathParam("name") String itemName,
-            @PathParam("value") double itemValue)
-    {
-        return addItem(itemName, itemValue, 0);
-    }
-
-    @Override
-    public double getItemPrice(String itemName)
-    {
-        if (dbManager.itemExists(itemName))
+        if (!itemName.isEmpty() && dbManager.itemExists(itemName))
         {
             return dbManager.getItemPrice(itemName) / 100.0;
         } else
@@ -119,23 +97,24 @@ public class InventoryManagerBeanRestful implements InventoryManager
         }
     }
 
-    @Override
-    public String getItemPriceText(String itemName)
+//    public String getItemPriceText(String itemName)
+//    {
+//        if (dbManager.itemExists(itemName))
+//        {
+//            int price = dbManager.getItemPrice(itemName);
+//            return '$' + String.format("%6.2f", price / 100.0);
+//        } else
+//        {
+//            return "Item '" + itemName + "' does not exist.";
+//        }
+//    }
+    
+    @GET
+    @Path("/get/quantity")
+    @Produces("text/plain")
+    public int getItemQuantity()
     {
-        if (dbManager.itemExists(itemName))
-        {
-            int price = dbManager.getItemPrice(itemName);
-            return '$' + String.format("%6.2f", price / 100.0);
-        } else
-        {
-            return "Item '" + itemName + "' does not exist.";
-        }
-    }
-
-    @Override
-    public int getItemQuantity(String itemName)
-    {
-        if (dbManager.itemExists(itemName))
+        if (!itemName.isEmpty() && dbManager.itemExists(itemName))
         {
             return dbManager.getItemQuantity(itemName);
         } else
@@ -144,7 +123,65 @@ public class InventoryManagerBeanRestful implements InventoryManager
         }
     }
 
-    @Override
+    /**
+     * Adds a new item to the database.  Providing price and
+     * quantity parameters are optional, and will be set to 0
+     * if they do not exist.
+     * @return
+     */
+    @POST
+    @Path("/create")
+    @Produces("text/plain")
+    public String addItem()
+    {        
+        if (!itemName.isEmpty())
+        {
+            if (!dbManager.itemExists(itemName))
+            {
+                int cost = (int) (price * 100);
+                dbManager.addItem(itemName, cost, quantity);
+                String priceResult = '$' + String.format("%6.2f", cost / 100.0);
+                return "Item " + itemName + " (" + priceResult + ") created successfully.";
+            } else
+            {
+                return updateItem();
+            }
+        } else
+        {
+            return "Please provide an item name as a parameter.";
+        }
+    }
+
+    @POST
+    @Path("/update")
+    @Produces("text/plain")
+    private String updateItem()
+    {
+        int cost = (int) (price * 100);
+        return dbManager.updateItem(itemName, cost, quantity);
+    }
+    
+    @POST
+    @Path("/add")
+    @Produces("text/plain")
+    public String addToItem()
+    {
+        int priceToAdd = (price >= 0) ? (int) (price * 100) : 0;   
+        int quantityToAdd = (quantity >= 0) ? quantity : 0;
+        return dbManager.addToItem(itemName, priceToAdd, quantityToAdd);     
+    }
+    
+    
+    @POST
+    @Path("/remove")
+    @Produces("text/plain")
+    public String removeFromItem()
+    {
+        int priceToAdd = (price >= 0) ? (int) (price * 100) : 0;   
+        int quantityToAdd = (quantity >= 0) ? quantity : 0;
+        return dbManager.addToItem(itemName, -priceToAdd, -quantityToAdd);     
+    }
+    
     public void increaseStockQuantity(String itemName, int numberToAdd)
     {
         if (dbManager.itemExists(itemName))
@@ -153,7 +190,6 @@ public class InventoryManagerBeanRestful implements InventoryManager
         }
     }
 
-    @Override
     public void decreaseStockQuantity(String itemName, int numberToRemove)
     {
         if (dbManager.itemExists(itemName))
@@ -162,7 +198,6 @@ public class InventoryManagerBeanRestful implements InventoryManager
         }
     }
 
-    @Override
     public void updateStockQuantity(String itemName, int newQuantity)
     {
         if (dbManager.itemExists(itemName))
@@ -171,7 +206,6 @@ public class InventoryManagerBeanRestful implements InventoryManager
         }
     }
 
-    @Override
     public void removeItem(String itemName)
     {
         if (dbManager.itemExists(itemName))
@@ -180,7 +214,6 @@ public class InventoryManagerBeanRestful implements InventoryManager
         }
     }
 
-    @Override
     public void updatePrice(String itemName, double newPrice)
     {
         if (dbManager.itemExists(itemName))
@@ -188,4 +221,5 @@ public class InventoryManagerBeanRestful implements InventoryManager
             dbManager.updatePrice(itemName, (int) (newPrice * 100));
         }
     }
+    
 }

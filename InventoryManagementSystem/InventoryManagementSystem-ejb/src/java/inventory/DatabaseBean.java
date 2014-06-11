@@ -378,4 +378,77 @@ public class DatabaseBean
         }
     }
 
+    public String updateItem(String itemName, int price, int quantity)
+    {
+        try
+        {
+            addToHistory(itemName);
+            Statement stmt = conn.createStatement();
+            String update = "UPDATE PRODUCT SET ";
+            if (price >= 0 && quantity >= 0)
+            {
+                update += "Product_Price='" + price + "', Product_Quantity='" +
+                        quantity + "'";
+            } else
+            { 
+                update += (price >= 0) ? "Product_Price='" + price + "'"
+                        : "Product_Quantity='" + quantity + "'";                
+            }
+            update += " WHERE Product_Name='" + itemName + "'";
+            int result = stmt.executeUpdate(update);
+            return (result > 0) ? "Item '" + itemName + "' updated successfully."
+                                : "Failed to update item.";
+        }
+        catch (SQLException ex)
+        {
+            System.err.println("Failed to update item. " + ex);
+            return "Failed to update item.";
+        }
+    }
+    
+    public String addToItem(String itemName, int priceToAdd, int quantityToAdd)
+    {
+        int newQuantity = -1;
+        int newPrice = -1;
+        //Calculate quantity
+        if (quantityToAdd != 0)
+        {
+            int currentQuantity = getItemQuantity(itemName);
+            newQuantity = currentQuantity + quantityToAdd;
+            newQuantity = (newQuantity < 0) ? 0 : newQuantity;
+        }
+        //Calculate price    
+        if (priceToAdd != 0)
+        {
+            int currentPrice = getItemPrice(itemName);
+            newPrice = currentPrice + priceToAdd;
+            newPrice = (newPrice < 0) ? 0 : newPrice;
+        }
+        try
+        {
+            addToHistory(itemName);
+            Statement stmt = conn.createStatement();
+            String update = "UPDATE PRODUCT SET ";
+            //Check if both values updated, will need a comma
+            if (newPrice >= 0 && newQuantity >= 0)
+            {
+                update += "Product_Price='" + newPrice + "', Product_Quantity='" +
+                        newQuantity + "'";
+            } else
+            {
+                //Update a single value
+                update += (newPrice >= 0) ? "Product_Price='" + newPrice + "'"
+                        : "Product_Quantity='" + newQuantity + "'";
+            }
+            update += " WHERE Product_Name='" + itemName + "'";
+            int result = stmt.executeUpdate(update);
+            return (result > 0) ? "Item '" + itemName + "' updated successfully."
+                                : "Failed to update item.";
+        }
+        catch (SQLException ex)
+        {
+            System.err.println("Failed to update item. " + ex);
+            return "Failed to add to item.";
+        }
+    }
 }
