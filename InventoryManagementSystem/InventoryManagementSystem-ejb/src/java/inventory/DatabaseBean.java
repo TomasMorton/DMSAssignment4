@@ -33,7 +33,8 @@ public class DatabaseBean
 
     //Database connection settings
     private final String dbDriver;
-    private final String dbUrl;
+    private final String dbAddress;
+    private final String dbName;
     private final String userName;
     private final String password;
     private Connection conn;
@@ -53,14 +54,16 @@ public class DatabaseBean
         //declare temporary variables due to exceptions and FINAL variables
         Properties properties = new Properties();
         String tempDbDriver = "";
-        String tempDbUrl = "";
+        String tempDbAddress = "";
+        String tempDbName = "";
         String tempUserName = "";
         String tempPassword = "";
         try
         {
             properties.loadFromXML(getClass().getResourceAsStream("SQLManagerConfig.xml"));
             tempDbDriver = properties.get("dbDriver").toString();
-            tempDbUrl = properties.get("dbUrl").toString();
+            tempDbAddress = properties.get("dbAddress").toString();
+            tempDbName = properties.get("dbName").toString();
             tempUserName = properties.get("user").toString();
             tempPassword = properties.get("password").toString();
         } catch (IOException ex)
@@ -68,36 +71,20 @@ public class DatabaseBean
             System.err.println("Unable to connect to database.");
         }
         this.dbDriver = tempDbDriver;
-        this.dbUrl = tempDbUrl;
+        this.dbAddress = tempDbAddress;
+        this.dbName = tempDbName;
         this.userName = tempUserName;
         this.password = tempPassword;
         initialiseSQLConnection();
     }
-//    private Connection getConnection()
-//    {
-//        Connection connection = null;
-//        try
-//        {
-//            InitialContext context = new InitialContext();
-//            DataSource dataSource = (DataSource) context.lookup("jdbc/DataSource");
-//            connection = dataSource.getConnection();
-//        } catch (NamingException e)
-//        {
-//            e.printStackTrace();
-//        } catch (SQLException e)
-//        {
-//            e.printStackTrace();
-//        }
-//        return connection;
-//    }
-
+    
     private void initialiseSQLConnection()
     {
         try
         {
             Class.forName(dbDriver);
-            conn = DriverManager.getConnection(dbUrl, userName, password);
-//            conn = getConnection();
+            conn = DriverManager.getConnection(dbAddress + dbName + ";create=true;user=" + 
+                    userName + ";password=" + password);
             setupTables();
             //Queries
             stmtGetItem = conn.prepareStatement("SELECT * FROM PRODUCT "
@@ -115,8 +102,6 @@ public class DatabaseBean
                     + "WHERE Product_Name=?");
             stmtUpdatePrice = conn.prepareStatement("UPDATE PRODUCT SET Product_Price=? "
                     + "WHERE Product_Name=?");
-//            stmtAddHistory = conn.prepareStatement("INSERT INTO HISTORY (Product_Name, " +
-//                    "Price, Quantity) VALUES (?, ?, ?)");
             stmtAddHistory = conn.prepareStatement("INSERT INTO HISTORY (Product_Name, "
                     + "Product_Price, Product_Quantity) SELECT Product_Name, "
                     + "Product_Price, Product_Quantity FROM PRODUCT WHERE Product_Name=?");
@@ -147,7 +132,7 @@ public class DatabaseBean
         {
             System.out.println("DatabaseBean: Creating Product table.");
             Statement statement = conn.createStatement();
-            statement.executeUpdate("CREATE TABLE DMS.PRODUCT (PRODUCT_NAME VARCHAR(100) NOT NULL, PRODUCT_PRICE DECIMAL(5), "
+            statement.executeUpdate("CREATE TABLE PRODUCT (PRODUCT_NAME VARCHAR(100) NOT NULL, PRODUCT_PRICE DECIMAL(5), "
                     + "PRODUCT_QUANTITY DECIMAL(5) DEFAULT 0  NOT NULL, PRIMARY KEY (PRODUCT_NAME))");
         }
         rs.close();
@@ -157,12 +142,12 @@ public class DatabaseBean
     {
         DatabaseMetaData dbm = conn.getMetaData();
         // check if "employee" table is there
-        ResultSet rs = dbm.getTables(null, "DMS", "HISTORY", null);
+        ResultSet rs = dbm.getTables(null, null, "HISTORY", null);
         if (!rs.next())
         {
             System.out.println("DatabaseBean: Creating History table.");
             Statement statement = conn.createStatement();
-            statement.executeUpdate("CREATE TABLE DMS.HISTORY (PRODUCT_NAME VARCHAR(100) NOT NULL, PRODUCT_PRICE DECIMAL(5),"
+            statement.executeUpdate("CREATE TABLE HISTORY (PRODUCT_NAME VARCHAR(100) NOT NULL, PRODUCT_PRICE DECIMAL(5),"
                     + " PRODUCT_QUANTITY DECIMAL(5) DEFAULT 0  NOT NULL, HISTORY_TIMESTAMP TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
                     + " NOT NULL, PRIMARY KEY (HISTORY_TIMESTAMP, PRODUCT_NAME), CONSTRAINT fk_history_product_name "
                     + "FOREIGN KEY (Product_Name) REFERENCES PRODUCT(Product_Name) ON DELETE CASCADE)");
@@ -282,17 +267,18 @@ public class DatabaseBean
     }
 
     /*
-    * I think this method is obselete as the overloading is handled at WSDL level.
-    */
+     * I think this method is obselete as the overloading is handled at WSDL level.
+     */
     public void addItem(String itemName, int itemPrice)
     {
         addItem(itemName, itemPrice, 0);
     }
 
     /**
-     * Gets an array of names of all items in the database.
-     * Used by getInventory currently.
-     * @return 
+     * Gets an array of names of all items in the database. Used by getInventory
+     * currently.
+     *
+     * @return
      */
     public String[] getItemNames()
     {
