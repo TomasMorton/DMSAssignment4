@@ -39,6 +39,7 @@ public class DatabaseBean
     private final String password;
     private Connection conn;
     //Prepared statements
+    private PreparedStatement stmtGetInventory;
     private PreparedStatement stmtGetItem;
     private PreparedStatement stmtGetItemPrice;
     private PreparedStatement stmtGetItemQuantity;
@@ -87,6 +88,7 @@ public class DatabaseBean
                     userName + ";password=" + password);
             setupTables();
             //Queries
+            stmtGetInventory = conn.prepareStatement("SELECT * FROM PRODUCT");
             stmtGetItem = conn.prepareStatement("SELECT * FROM PRODUCT "
                     + "WHERE Product_Name=?");
             stmtGetItemPrice = conn.prepareStatement("SELECT Product_Price FROM PRODUCT "
@@ -161,6 +163,7 @@ public class DatabaseBean
         {
             stmtAddHistory.close();
             stmtAddItem.close();
+            stmtGetInventory.close();
             stmtGetItemPrice.close();
             stmtGetItemQuantity.close();
             stmtItemList.close();
@@ -174,6 +177,21 @@ public class DatabaseBean
         }
     }
 
+    public InventoryItemList getInventory()
+    {
+        InventoryItemList inventory = new InventoryItemList();
+        ResultSet rs = stmtGetInventory.executeQuery();
+        while (rs.next())
+        {
+            String itemName = rs.getString("Product_Name");
+            int price = rs.getInt("Product_Price");
+            int quantity = rs.getInt("Quantity");
+            InventoryItem item = new InventoryItem();
+            inventory.add(item);
+        }
+        return inventory;
+    }
+    
     public boolean itemExists(String itemName)
     {
         boolean exists = false;
